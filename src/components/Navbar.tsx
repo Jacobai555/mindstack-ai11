@@ -65,9 +65,9 @@ export function Navbar() {
 
           {/* Right side */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--neon-cyan)] transition-colors"
+            <button>
+              onClick={() => setDarkModeAuto (!darkMode)}
+              className="p-2 rounded-lg text-[var(--text-unmuted)] hover:text-[var(--neon-cyan)] transition-colors"
               title="Toggle theme"
             >
               {darkMode ? <Sun size={18} /> : <Moon size={18} />}
