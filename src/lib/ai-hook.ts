@@ -1,3 +1,4 @@
+import { useState, useRef } from 'react'
 import {
   fetchServerSentEvents,
   useChat,
@@ -5,17 +6,28 @@ import {
 } from '@tanstack/ai-react'
 import type { InferChatMessages } from '@tanstack/ai-react'
 
-// Default chat options for simple usage
-const defaultChatOptions = createChatClientOptions({
+const _defaultOptions = createChatClientOptions({
   connection: fetchServerSentEvents('/api/chat'),
 })
 
-export type ChatMessages = InferChatMessages<typeof defaultChatOptions>
+export type ChatMessages = InferChatMessages<typeof _defaultOptions>
 
-export const useAIChat = () => {
-  const chatOptions = createChatClientOptions({
-    connection: fetchServerSentEvents('/api/chat'),
-  })
+interface UseAIChatOptions {
+  initialMessages?: ChatMessages
+  onFinish?: (message: ChatMessages[number]) => void | Promise<void>
+}
+
+export const useAIChat = (options?: UseAIChatOptions) => {
+  const onFinishRef = useRef(options?.onFinish)
+  onFinishRef.current = options?.onFinish
+
+  const [chatOptions] = useState(() =>
+    createChatClientOptions({
+      connection: fetchServerSentEvents('/api/chat'),
+      initialMessages: options?.initialMessages,
+      onFinish: (msg) => { onFinishRef.current?.(msg) },
+    })
+  )
 
   const chat = useChat(chatOptions)
   return { ...chat, clearMessages: chat.clear }
