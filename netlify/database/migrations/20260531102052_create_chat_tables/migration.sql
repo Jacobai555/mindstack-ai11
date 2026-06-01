@@ -7,6 +7,7 @@ CREATE TABLE "chat_messages" (
 );
 --> statement-breakpoint
 CREATE TABLE "chat_sessions" (
+	guest_id text
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 	"title" text DEFAULT 'New Chat' NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
