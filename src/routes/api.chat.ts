@@ -39,27 +39,30 @@ export const Route = createFileRoute('/api/chat')({
 
         const abortController = new AbortController()
 
-        try {
-          const body = await request.json()
-          const { messages } = body
-          const data = body.data || {}
-
+	   try {
+    	  // existing chat code
+		} catch (error) {
+		  console.error("FULL ERROR:", error);
+	  	  throw error;
+  		}
           // Determine the best available provider
           let provider: 'anthropic' | 'openai' | 'gemini' | 'ollama' =
             data.provider || 'ollama'
           let model: string = data.model || 'mistral:7b'
 
           // Use the first available provider with an API key, fallback to ollama
-          if (process.env.ANTHROPIC_API_KEY) {
+          if (process.env.ANTHROPIC_API_KEY)
+         {
             provider = 'anthropic'
             model = 'claude-haiku-4-5'
           } else if (process.env.OPENAI_API_KEY) {
             provider = 'openai'
             model = 'gpt-4o'
-          } else if (process.env.GEMINI_API_KEY) {
+           }
+            else if (process.env.GEMINI_API_KEY) {
             provider = 'gemini'
-            model = 'gemini-2.0-flash-exp'
-          }
+           model = 'gemini-2.5-flash-exp'
+           }
 
           const adapterConfig = {
             anthropic: () =>
