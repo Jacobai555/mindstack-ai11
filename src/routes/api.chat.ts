@@ -1,11 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { chat, maxIterations, toServerSentEventsResponse } from '@tanstack/ai'
-import { anthropicText } from '@tanstack/ai-anthropic'
-import { openaiText } from '@tanstack/ai-openai'
-import { geminiText } from '@tanstack/ai-gemini'
 import { ollamaText } from '@tanstack/ai-ollama'
-
 import { getWeather } from '@/lib/weather-tools'
+import { openaiText } from '@tanstack/ai-openai'
 
 const SYSTEM_PROMPT = `You are MindStack AI, an intelligent assistant for an AI engineering platform. You help users with:
 
@@ -45,36 +42,17 @@ export const Route = createFileRoute('/api/chat')({
           const data = body.data || {}
 
           // Determine the best available provider
-          let provider: 'anthropic' | 'openai' | 'gemini' | 'ollama' =
-            data.provider || 'ollama'
-          let model: string = data.model || 'mistral:7b'
 
-          // Use the first available provider with an API key, fallback to ollama
-          if (process.env.ANTHROPIC_API_KEY) {
-            provider = 'anthropic'
-            model = 'claude-haiku-4-5'
-          } else if (process.env.OPENAI_API_KEY) {
-            provider = 'openai'
-            model = 'gpt-4o'
-          } else if (process.env.GEMINI_API_KEY) {
-            provider = 'gemini'
-            model = 'gemini-2.0-flash-exp'
-          }
-
-          const adapterConfig = {
-            anthropic: () =>
-              anthropicText((model || 'claude-haiku-4-5') as any),
-            openai: () => openaiText((model || 'gpt-4o') as any),
-            gemini: () => geminiText((model || 'gemini-2.0-flash-exp') as any),
-            ollama: () => ollamaText((model || 'mistral:7b') as any),
-          }
-
-          const adapter = adapterConfig[provider]()
+	let provider: 'ollama' = 'ollama'
+	let model = 'llama3'
+	const adapter = openaiText('gpt-4o-mini' as any)
 
           const stream = chat({
             adapter,
             tools: [getWeather],
+
             systemPrompts: [SYSTEM_PROMPT],
+	    messages,
             agentLoopStrategy: maxIterations(5),
             messages,
             abortController,

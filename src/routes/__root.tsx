@@ -4,22 +4,13 @@ import { ParticleBackground } from '@/components/ParticleBackground'
 import '../styles.css'
 
 export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'MindStack AI — Intelligent Assistant Platform' },
-      { name: 'description', content: 'Offline AI Engineering Lab and Intelligent Assistant Platform. Chat, tools, cybersecurity lab, and AI learning resources.' },
-      { name: 'theme-color', content: '#080b14' },
-    ],
-    links: [
-      { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-      { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' },
-    ],
-  }),
   component: RootDocument,
+  notFoundComponent: () => (
+    <div>
+      Page not found
+    </div>
+  ),
 })
-
 function RootDocument() {
   return (
     <html lang="en" data-theme="dark">
