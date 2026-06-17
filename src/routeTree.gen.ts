@@ -15,6 +15,7 @@ import { Route as CyberLabRouteImport } from './routes/cyber-lab'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiSessionsRouteImport } from './routes/api.sessions'
 import { Route as ApiSessionMessagesRouteImport } from './routes/api.session-messages'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
 
@@ -48,6 +49,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSessionsRoute = ApiSessionsRouteImport.update({
+  id: '/api/sessions',
+  path: '/api/sessions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSessionMessagesRoute = ApiSessionMessagesRouteImport.update({
   id: '/api/session-messages',
   path: '/api/session-messages',
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/tools': typeof ToolsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/session-messages': typeof ApiSessionMessagesRoute
+  '/api/sessions': typeof ApiSessionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/tools': typeof ToolsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/session-messages': typeof ApiSessionMessagesRoute
+  '/api/sessions': typeof ApiSessionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/tools': typeof ToolsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/session-messages': typeof ApiSessionMessagesRoute
+  '/api/sessions': typeof ApiSessionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/tools'
     | '/api/chat'
     | '/api/session-messages'
+    | '/api/sessions'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/tools'
     | '/api/chat'
     | '/api/session-messages'
+    | '/api/sessions'
   id:
     | '__root__'
     | '/'
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '/tools'
     | '/api/chat'
     | '/api/session-messages'
+    | '/api/sessions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,6 +144,7 @@ export interface RootRouteChildren {
   ToolsRoute: typeof ToolsRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiSessionMessagesRoute: typeof ApiSessionMessagesRoute
+  ApiSessionsRoute: typeof ApiSessionsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -178,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/sessions': {
+      id: '/api/sessions'
+      path: '/api/sessions'
+      fullPath: '/api/sessions'
+      preLoaderRoute: typeof ApiSessionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/session-messages': {
       id: '/api/session-messages'
       path: '/api/session-messages'
@@ -204,6 +224,7 @@ const rootRouteChildren: RootRouteChildren = {
   ToolsRoute: ToolsRoute,
   ApiChatRoute: ApiChatRoute,
   ApiSessionMessagesRoute: ApiSessionMessagesRoute,
+  ApiSessionsRoute: ApiSessionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

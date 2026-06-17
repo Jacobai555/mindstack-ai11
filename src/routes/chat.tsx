@@ -14,8 +14,8 @@ export const Route = createFileRoute('/chat')({
 interface Session {
   id: string
   title: string
-  createdAt: string
-  updatedAt: string
+  created_at: string
+  updated_at: string
 }
 
 interface DbMessage {
@@ -23,7 +23,7 @@ interface DbMessage {
   sessionId: string
   role: string
   content: string
-  createdAt: string
+  created_at: string
 }
 
 // ── API helpers ───────────────────────────────────────────────────────────────
@@ -37,13 +37,22 @@ async function apiGetSessions(): Promise<Session[]> {
   }
 }
 
-async function apiCreateSession(title: string): Promise<Session> {
+async function apiCreateSession(title: string) {
   const res = await fetch('/api/sessions', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify({ title }),
   })
-  return res.json()
+
+  const data = await res.json()
+
+  if (!res.ok) {
+    throw new Error(data.error || 'Session creation failed')
+  }
+
+  return data
 }
 
 async function apiDeleteSession(id: string): Promise<void> {
@@ -73,8 +82,9 @@ function dbToUIMessage(msg: DbMessage): ChatMessages[number] {
   return {
     id: msg.id,
     role: msg.role as 'user' | 'assistant',
-    parts: [{ type: 'text' as const, content: msg.content }],
-    createdAt: new Date(msg.createdAt),
+    parts: [{ type: 'text',
+	  content: msg.content }],
+    createdAt: new Date(msg.created_at),
   }
 }
 
@@ -83,15 +93,13 @@ function getMessageText(msg: ChatMessages[number]): string {
   return part && 'content' in part ? (part.content as string) ?? '' : ''
 }
 
-function formatTime(dateStr: string): string {
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffMins = Math.floor((now.getTime() - date.getTime()) / 60000)
-  if (diffMins < 1) return 'just now'
-  if (diffMins < 60) return `${diffMins}m ago`
-  const diffHours = Math.floor(diffMins / 60)
-  if (diffHours < 24) return `${diffHours}h ago`
-  return date.toLocaleDateString()
+function formatTime(dateStr: string) {
+  return new Date(dateStr).toLocaleString(
+    'en-US',
+    {
+      timeZone: 'Asia/Yangon'
+    }
+  )
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -185,37 +193,69 @@ function ChatInterface({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading])
 
-  const handleSend = async () => {
-    const text = input.trim()
-    if (!text || isLoading) return
-    setInput('')
-    inputRef.current?.focus()
+const handleSend = async () => {
+  console.log("HANDLE SEND FIRED")
 
-    if (!sessionIdRef.current && !creatingRef.current) {
-      creatingRef.current = true
-      try {
-        const session = await apiCreateSession(text.slice(0, 60))
-        sessionIdRef.current = session.id
-        onSessionCreated(session)
-      } catch {
-        creatingRef.current = false
-        return
-      }
+  const text = input.trim()
+
+  console.log("TEXT =", text)
+
+  if (!text || isLoading) {
+    console.log("BLOCKED")
+    return
+  }
+
+  setInput('')
+  inputRef.current?.focus()
+
+  if (!sessionIdRef.current && !creatingRef.current) {
+    creatingRef.current = true
+
+    try {
+
+const session = await apiCreateSession(
+  text.slice(0, 60)
+)
+
+console.log("SESSION =", session)
+
+if (!session?.id) {
+  console.error("Session creation failed")
+  return
+}
+
+sessionIdRef.current = session.id
+
+      onSessionCreated(session)
+    } catch (err) {
+      console.error(err)
       creatingRef.current = false
+      return
     }
 
-    const sid = sessionIdRef.current
-    if (sid) apiSaveMessage(sid, 'user', text)
-
-    sendMessage(text)
+    creatingRef.current = false
   }
 
-  const handleKey = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
+  const sid = sessionIdRef.current
+
+  if (sid) {
+    await apiSaveMessage(
+      sid,
+      'user',
+      text
+    )
   }
+
+  console.log("SENDING:", text)
+  await sendMessage(text)
+}
+
+const handleKey = (e: React.KeyboardEvent) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault()
+    handleSend()
+  }
+}
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
@@ -399,6 +439,9 @@ function ChatPage() {
     async (id: string) => {
       if (id === activeSessionId) return
       const dbMsgs = await apiGetMessages(id)
+	console.log("SESSION CLICKED:", id)
+	console.log("DB MESSAGES:", dbMsgs)
+	
       setActiveSessionId(id)
       setInitialMessages(dbMsgs.map(dbToUIMessage))
       setChatKey((k) => k + 1)
@@ -482,7 +525,14 @@ function ChatPage() {
                         style={{ color: 'var(--text-muted)' }}
                       >
                         <Clock size={9} />
-                        <span>{formatTime(session.updatedAt)}</span>
+                      <span>
+			  {formatTime(
+			    session.updated_at ??
+			    session.created_at
+			  )}
+			</span>
+			
+			
                       </div>
                     </div>
                     <button

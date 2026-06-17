@@ -29,6 +29,7 @@ export const useAIChat = (options?: UseAIChatOptions) => {
     })
   )
 
-  const chat = useChat(chatOptions)
+const chat = useChat(chatOptions)
+console.log(chat)
   return { ...chat, clearMessages: chat.clear }
 }
