@@ -75,8 +75,12 @@ console.error("MESSAGE SAVE ERROR:", error)
             session_id: body.sessionId,
             role: body.role,
             content: body.content,
-          })
-          .select()
+             })
+          .order('created_at', {
+             ascending: true
+             })
+         .select()
+
   console.log("MESSAGE DATA:", data)
   console.log("MESSAGE ERROR:", error)   
 

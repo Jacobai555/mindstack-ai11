@@ -4,6 +4,7 @@ import { Send, Square, Trash2, Brain, Plus, MessageSquare, Zap, Clock } from 'lu
 import { Streamdown } from 'streamdown'
 import { useAIChat } from '@/lib/ai-hook'
 import type { ChatMessages } from '@/lib/ai-hook'
+import { getUser } from '@/lib/auth'
 
 export const Route = createFileRoute('/chat')({
   component: ChatPage,
@@ -20,7 +21,7 @@ interface Session {
 
 interface DbMessage {
   id: string
-  sessionId: string
+  session_id: string
   role: string
   content: string
   created_at: string
@@ -82,24 +83,37 @@ function dbToUIMessage(msg: DbMessage): ChatMessages[number] {
   return {
     id: msg.id,
     role: msg.role as 'user' | 'assistant',
-    parts: [{ type: 'text',
-	  content: msg.content }],
+    parts: [
+      {
+        type: 'text',
+        content: msg.content,
+      },
+    ],
     createdAt: new Date(msg.created_at),
-  }
+  } as ChatMessages[number]
 }
 
-function getMessageText(msg: ChatMessages[number]): string {
-  const part = msg.parts.find((p) => p.type === 'text')
-  return part && 'content' in part ? (part.content as string) ?? '' : ''
+function getMessageText(
+  msg: ChatMessages[number]
+): string {
+  const part = msg.parts.find(
+    (p) => p.type === 'text'
+  )
+
+  return part && 'content' in part
+    ? String(part.content ?? '')
+    : ''
 }
 
 function formatTime(dateStr: string) {
-  return new Date(dateStr).toLocaleString(
-    'en-US',
-    {
-      timeZone: 'Asia/Yangon'
-    }
-  )
+  if (!dateStr) return 'Unknown'
+
+  const date = new Date(dateStr + 'Z')
+
+  if (isNaN(date.getTime()))
+    return 'Invalid date'
+
+  return date.toLocaleString()
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -141,16 +155,25 @@ function MessageBubble({ message }: { message: ChatMessages[number] }) {
         className={`max-w-[75%] px-4 py-3 text-sm ${isUser ? 'chat-bubble-user' : 'chat-bubble-ai'}`}
         style={{ color: 'var(--text-primary)' }}
       >
-        {message.parts.map((part, i) => {
-          if (part.type === 'text' && 'content' in part && part.content) {
-            return (
-              <div key={i} className="ai-prose">
-                <Streamdown>{part.content as string}</Streamdown>
-              </div>
-            )
-          }
-          return null
-        })}
+
+  {message.parts.map((part, i) => {
+  if (part.type === 'text') {
+    return (
+      <div key={i}>
+        <Streamdown>
+          {String(
+            (part as any).content ??
+            (part as any).text ??
+            ''
+          )}
+        </Streamdown>
+      </div>
+    )
+  }
+
+  return null
+})}
+
       </div>
     </div>
   )
@@ -177,21 +200,82 @@ function ChatInterface({
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
-  const onFinish = useCallback(async (message: ChatMessages[number]) => {
+
+const onFinish = useCallback(
+  async (message: ChatMessages[number]) => {
     const sid = sessionIdRef.current
+
     if (!sid) return
+
     const text = getMessageText(message)
-    if (text) apiSaveMessage(sid, 'assistant', text)
-  }, [])
 
-  const { messages, sendMessage, isLoading, stop, clearMessages } = useAIChat({
-    initialMessages,
-    onFinish,
+    if (text) {
+      await apiSaveMessage(
+        sid,
+        'assistant',
+        text
+      )
+    }
+  },
+  []
+)
+
+
+const [displayMessages, setDisplayMessages] =
+  useState<ChatMessages>(initialMessages)
+
+const {
+  messages,
+  sendMessage,
+  isLoading,
+  stop,
+  clearMessages,
+} = useAIChat({
+  onFinish,
+})
+
+console.log(
+  "HOOK MESSAGES:",
+  messages
+)
+
+useEffect(() => {
+  setDisplayMessages(initialMessages)
+}, [initialMessages])
+
+useEffect(() => {
+  if (messages.length > 0) {
+    setDisplayMessages(messages)
+  }
+}, [messages])
+
+useEffect(() => {
+  console.log(
+    "LIVE MESSAGES",
+    JSON.stringify(messages, null, 2)
+  )
+}, [messages])
+
+useEffect(() => {
+  messagesEndRef.current?.scrollIntoView({
+    behavior: 'smooth',
   })
+}, [messages])
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, isLoading])
+useEffect(() => {
+  console.log("MESSAGES CHANGED", messages)
+}, [messages])
+
+useEffect(() => {
+  console.log("LOADING CHANGED", isLoading)
+}, [isLoading])
+
+useEffect(() => {
+  console.log(
+    "INITIAL MESSAGES:",
+    initialMessages
+  )
+}, [initialMessages])
 
 const handleSend = async () => {
   console.log("HANDLE SEND FIRED")
@@ -226,6 +310,10 @@ if (!session?.id) {
 
 sessionIdRef.current = session.id
 
+localStorage.setItem(
+  'activeSessionId',
+  session.id
+)
       onSessionCreated(session)
     } catch (err) {
       console.error(err)
@@ -237,6 +325,10 @@ sessionIdRef.current = session.id
   }
 
   const sid = sessionIdRef.current
+console.log(
+  "ASSISTANT SAVING:",
+  text
+)
 
   if (sid) {
     await apiSaveMessage(
@@ -245,11 +337,43 @@ sessionIdRef.current = session.id
       text
     )
   }
+  
+console.log(
+  "MESSAGES BEFORE SEND",
+  JSON.stringify(messages, null, 2)
+)
+
+console.log("SEND TYPE", typeof sendMessage)
+console.log("SEND FN", sendMessage)
+console.log("SEND MESSAGE FN", sendMessage)
+console.log("MESSAGE COUNT", messages.length)
 
   console.log("SENDING:", text)
-  await sendMessage(text)
-}
 
+await sendMessage(text)
+
+  const dbMsgs = await apiGetMessages(
+  sessionIdRef.current!
+)
+
+console.log(
+  "DB AFTER SEND",
+  dbMsgs
+)
+
+
+setTimeout(() => {
+  console.log(
+    "AFTER SEND STATE:",
+    messages
+  )
+}, 1000)
+
+console.log(
+  "MESSAGES AFTER SEND",
+  messages
+)
+} 
 const handleKey = (e: React.KeyboardEvent) => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault()
@@ -276,22 +400,26 @@ const handleKey = (e: React.KeyboardEvent) => {
         <div className="ml-auto flex items-center gap-2">
           <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--neon-green)' }} />
           <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Connected</span>
-          {messages.length > 0 && (
-            <button
-              onClick={() => clearMessages?.()}
-              className="p-1.5 rounded transition-colors hover:text-[var(--neon-pink)]"
-              style={{ color: 'var(--text-muted)' }}
-              title="Clear chat view"
-            >
-              <Trash2 size={14} />
-            </button>
-          )}
+
+{displayMessages.length > 0 && (
+  
+    <button
+      onClick={() => clearMessages?.()}
+      className="p-1.5 rounded transition-colors hover:text-[var(--neon-pink)]"
+      style={{ color: 'var(--text-muted)' }}
+      title="Clear chat view"
+    >
+      <Trash2 size={14} />
+    </button>
+
+)}
+
         </div>
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto">
-        {messages.length === 0 ? (
+        {displayMessages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center px-4 text-center">
             <div
               className="ai-orb w-16 h-16 mb-6 flex items-center justify-center"
@@ -325,7 +453,7 @@ const handleKey = (e: React.KeyboardEvent) => {
           </div>
         ) : (
           <div className="max-w-3xl mx-auto w-full px-4 py-6">
-            {messages.map((msg) => (
+            {displayMessages.map((msg) => (
               <MessageBubble key={msg.id} message={msg} />
             ))}
             {isLoading && (
@@ -370,6 +498,19 @@ const handleKey = (e: React.KeyboardEvent) => {
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
+            className="
+		w-full
+		bg-[#2f2f2f]
+		text-white
+		placeholder:text-gray-400
+		border
+		border-[#444]
+		rounded-3xl
+		px-4
+		py-3
+		outline-none
+		focus:border-[#666]
+		"
               onKeyDown={handleKey}
               placeholder="Ask MindStack AI anything… (Enter to send, Shift+Enter for new line)"
               rows={1}
@@ -394,6 +535,8 @@ const handleKey = (e: React.KeyboardEvent) => {
                 t.style.height = Math.min(t.scrollHeight, 120) + 'px'
               }}
               disabled={isLoading}
+		
+
             />
           </div>
           <button
@@ -407,7 +550,8 @@ const handleKey = (e: React.KeyboardEvent) => {
           >
             <Send size={16} strokeWidth={2.5} />
           </button>
-        </div>
+           
+       </div>
         <p className="text-center text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
           MindStack AI may produce inaccurate information. Always verify important facts.
         </p>
@@ -423,36 +567,78 @@ function ChatPage() {
   const [sessions, setSessions] = useState<Session[]>([])
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const [initialMessages, setInitialMessages] = useState<ChatMessages>([])
-  const [chatKey, setChatKey] = useState(0)
 
-  useEffect(() => {
-    apiGetSessions().then(setSessions)
-  }, [])
+useEffect(() => {
+  const load = async () => {
+    const sessions = await apiGetSessions()
 
-  const startNewChat = useCallback(() => {
-    setActiveSessionId(null)
-    setInitialMessages([])
-    setChatKey((k) => k + 1)
-  }, [])
+    setSessions(sessions)
+
+    const savedId =
+      localStorage.getItem('activeSessionId')
+
+    if (!savedId) return
+
+    const dbMsgs =
+      await apiGetMessages(savedId)
+
+    setActiveSessionId(savedId)
+
+setInitialMessages(
+  dbMsgs
+    .sort(
+      (a, b) =>
+        new Date(a.created_at).getTime() -
+        new Date(b.created_at).getTime()
+    )
+    .map(dbToUIMessage)
+)
+
+  }
+
+  load()
+}, [])
+
+
+const startNewChat = useCallback(() => {
+  localStorage.removeItem(
+    'activeSessionId'
+  )
+
+  setActiveSessionId(null)
+  setInitialMessages([])
+}, [])
+  
 
   const selectSession = useCallback(
     async (id: string) => {
       if (id === activeSessionId) return
       const dbMsgs = await apiGetMessages(id)
+	localStorage.setItem('activeSessionId', id)
+
 	console.log("SESSION CLICKED:", id)
 	console.log("DB MESSAGES:", dbMsgs)
-	
+        console.log(
+           "LOADED",
+            dbMsgs.length,
+           "MESSAGES"
+          )	
       setActiveSessionId(id)
       setInitialMessages(dbMsgs.map(dbToUIMessage))
-      setChatKey((k) => k + 1)
     },
     [activeSessionId],
   )
 
-  const handleSessionCreated = useCallback((session: Session) => {
-    setActiveSessionId(session.id)
-    setSessions((prev) => [session, ...prev])
-  }, [])
+const handleSessionCreated = useCallback((session: Session) => {
+  setActiveSessionId(session.id)
+
+  localStorage.setItem(
+    'activeSessionId',
+    session.id
+  )
+
+  setSessions((prev) => [session, ...prev])
+}, [])
 
   const handleDeleteSession = useCallback(
     async (id: string, e: React.MouseEvent) => {
@@ -560,7 +746,6 @@ function ChatPage() {
 
       {/* Chat interface — remounts on session switch via key */}
       <ChatInterface
-        key={chatKey}
         initialSessionId={activeSessionId}
         initialMessages={initialMessages}
         onSessionCreated={handleSessionCreated}

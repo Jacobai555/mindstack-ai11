@@ -16,12 +16,12 @@ export const Route = createFileRoute('/api/sessions')({
         try {
           const body = await request.json()
 
+	  console.log('SESSION BODY:', body)
+
           const { data, error } = await supabase
             .from('sessions')
             .insert({
- session_id: body.sessionId,
-    role: body.role,
-    content: body.content,
+	    title: body.title,
             })
             .select()
             .single()

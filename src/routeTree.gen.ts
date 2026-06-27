@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ToolsRouteImport } from './routes/tools'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as LearnRouteImport } from './routes/learn'
 import { Route as CyberLabRouteImport } from './routes/cyber-lab'
 import { Route as ChatRouteImport } from './routes/chat'
@@ -18,10 +20,21 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiSessionsRouteImport } from './routes/api.sessions'
 import { Route as ApiSessionMessagesRouteImport } from './routes/api.session-messages'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
+import { Route as ApiSessionsCompleteRouteImport } from './routes/api.sessions.complete'
 
 const ToolsRoute = ToolsRouteImport.update({
   id: '/tools',
   path: '/tools',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LearnRoute = LearnRouteImport.update({
@@ -64,6 +77,11 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSessionsCompleteRoute = ApiSessionsCompleteRouteImport.update({
+  id: '/complete',
+  path: '/complete',
+  getParentRoute: () => ApiSessionsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -71,10 +89,13 @@ export interface FileRoutesByFullPath {
   '/chat': typeof ChatRoute
   '/cyber-lab': typeof CyberLabRoute
   '/learn': typeof LearnRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/tools': typeof ToolsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/session-messages': typeof ApiSessionMessagesRoute
-  '/api/sessions': typeof ApiSessionsRoute
+  '/api/sessions': typeof ApiSessionsRouteWithChildren
+  '/api/sessions/complete': typeof ApiSessionsCompleteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -82,10 +103,13 @@ export interface FileRoutesByTo {
   '/chat': typeof ChatRoute
   '/cyber-lab': typeof CyberLabRoute
   '/learn': typeof LearnRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/tools': typeof ToolsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/session-messages': typeof ApiSessionMessagesRoute
-  '/api/sessions': typeof ApiSessionsRoute
+  '/api/sessions': typeof ApiSessionsRouteWithChildren
+  '/api/sessions/complete': typeof ApiSessionsCompleteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -94,10 +118,13 @@ export interface FileRoutesById {
   '/chat': typeof ChatRoute
   '/cyber-lab': typeof CyberLabRoute
   '/learn': typeof LearnRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/tools': typeof ToolsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/session-messages': typeof ApiSessionMessagesRoute
-  '/api/sessions': typeof ApiSessionsRoute
+  '/api/sessions': typeof ApiSessionsRouteWithChildren
+  '/api/sessions/complete': typeof ApiSessionsCompleteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,10 +134,13 @@ export interface FileRouteTypes {
     | '/chat'
     | '/cyber-lab'
     | '/learn'
+    | '/login'
+    | '/signup'
     | '/tools'
     | '/api/chat'
     | '/api/session-messages'
     | '/api/sessions'
+    | '/api/sessions/complete'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -118,10 +148,13 @@ export interface FileRouteTypes {
     | '/chat'
     | '/cyber-lab'
     | '/learn'
+    | '/login'
+    | '/signup'
     | '/tools'
     | '/api/chat'
     | '/api/session-messages'
     | '/api/sessions'
+    | '/api/sessions/complete'
   id:
     | '__root__'
     | '/'
@@ -129,10 +162,13 @@ export interface FileRouteTypes {
     | '/chat'
     | '/cyber-lab'
     | '/learn'
+    | '/login'
+    | '/signup'
     | '/tools'
     | '/api/chat'
     | '/api/session-messages'
     | '/api/sessions'
+    | '/api/sessions/complete'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -141,10 +177,12 @@ export interface RootRouteChildren {
   ChatRoute: typeof ChatRoute
   CyberLabRoute: typeof CyberLabRoute
   LearnRoute: typeof LearnRoute
+  LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
   ToolsRoute: typeof ToolsRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiSessionMessagesRoute: typeof ApiSessionMessagesRoute
-  ApiSessionsRoute: typeof ApiSessionsRoute
+  ApiSessionsRoute: typeof ApiSessionsRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -154,6 +192,20 @@ declare module '@tanstack/react-router' {
       path: '/tools'
       fullPath: '/tools'
       preLoaderRoute: typeof ToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/learn': {
@@ -212,8 +264,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/sessions/complete': {
+      id: '/api/sessions/complete'
+      path: '/complete'
+      fullPath: '/api/sessions/complete'
+      preLoaderRoute: typeof ApiSessionsCompleteRouteImport
+      parentRoute: typeof ApiSessionsRoute
+    }
   }
 }
+
+interface ApiSessionsRouteChildren {
+  ApiSessionsCompleteRoute: typeof ApiSessionsCompleteRoute
+}
+
+const ApiSessionsRouteChildren: ApiSessionsRouteChildren = {
+  ApiSessionsCompleteRoute: ApiSessionsCompleteRoute,
+}
+
+const ApiSessionsRouteWithChildren = ApiSessionsRoute._addFileChildren(
+  ApiSessionsRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -221,10 +292,12 @@ const rootRouteChildren: RootRouteChildren = {
   ChatRoute: ChatRoute,
   CyberLabRoute: CyberLabRoute,
   LearnRoute: LearnRoute,
+  LoginRoute: LoginRoute,
+  SignupRoute: SignupRoute,
   ToolsRoute: ToolsRoute,
   ApiChatRoute: ApiChatRoute,
   ApiSessionMessagesRoute: ApiSessionMessagesRoute,
-  ApiSessionsRoute: ApiSessionsRoute,
+  ApiSessionsRoute: ApiSessionsRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -8,7 +8,8 @@
   },
   "dependencies": {
     "@netlify/database": "^1.0.0",
-    "@supabase/supabase-js": "^2.108.1",
+    "@supabase/auth-helpers-react": "^0.15.0",
+    "@supabase/supabase-js": "^2.108.2",
     "@tailwindcss/vite": "4.2.2",
     "@tanstack/ai": "0.10.2",
     "@tanstack/ai-anthropic": "0.7.3",
