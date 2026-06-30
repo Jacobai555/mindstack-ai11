@@ -17,6 +17,7 @@ import { Route as CyberLabRouteImport } from './routes/cyber-lab'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiUploadRouteImport } from './routes/api.upload'
 import { Route as ApiSessionsRouteImport } from './routes/api.sessions'
 import { Route as ApiSessionMessagesRouteImport } from './routes/api.session-messages'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
@@ -62,6 +63,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiUploadRoute = ApiUploadRouteImport.update({
+  id: '/api/upload',
+  path: '/api/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSessionsRoute = ApiSessionsRouteImport.update({
   id: '/api/sessions',
   path: '/api/sessions',
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/api/session-messages': typeof ApiSessionMessagesRoute
   '/api/sessions': typeof ApiSessionsRouteWithChildren
+  '/api/upload': typeof ApiUploadRoute
   '/api/sessions/complete': typeof ApiSessionsCompleteRoute
 }
 export interface FileRoutesByTo {
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/api/session-messages': typeof ApiSessionMessagesRoute
   '/api/sessions': typeof ApiSessionsRouteWithChildren
+  '/api/upload': typeof ApiUploadRoute
   '/api/sessions/complete': typeof ApiSessionsCompleteRoute
 }
 export interface FileRoutesById {
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/api/session-messages': typeof ApiSessionMessagesRoute
   '/api/sessions': typeof ApiSessionsRouteWithChildren
+  '/api/upload': typeof ApiUploadRoute
   '/api/sessions/complete': typeof ApiSessionsCompleteRoute
 }
 export interface FileRouteTypes {
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/session-messages'
     | '/api/sessions'
+    | '/api/upload'
     | '/api/sessions/complete'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/session-messages'
     | '/api/sessions'
+    | '/api/upload'
     | '/api/sessions/complete'
   id:
     | '__root__'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/session-messages'
     | '/api/sessions'
+    | '/api/upload'
     | '/api/sessions/complete'
   fileRoutesById: FileRoutesById
 }
@@ -183,6 +195,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   ApiSessionMessagesRoute: typeof ApiSessionMessagesRoute
   ApiSessionsRoute: typeof ApiSessionsRouteWithChildren
+  ApiUploadRoute: typeof ApiUploadRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -243,6 +256,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/upload': {
+      id: '/api/upload'
+      path: '/api/upload'
+      fullPath: '/api/upload'
+      preLoaderRoute: typeof ApiUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/sessions': {
       id: '/api/sessions'
       path: '/api/sessions'
@@ -298,6 +318,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   ApiSessionMessagesRoute: ApiSessionMessagesRoute,
   ApiSessionsRoute: ApiSessionsRouteWithChildren,
+  ApiUploadRoute: ApiUploadRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

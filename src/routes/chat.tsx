@@ -278,11 +278,8 @@ useEffect(() => {
 }, [initialMessages])
 
 const handleSend = async () => {
-  console.log("HANDLE SEND FIRED")
 
   const text = input.trim()
-
-  console.log("TEXT =", text)
 
   if (!text || isLoading) {
     console.log("BLOCKED")
@@ -338,10 +335,6 @@ console.log(
     )
   }
   
-console.log(
-  "MESSAGES BEFORE SEND",
-  JSON.stringify(messages, null, 2)
-)
 
 console.log("SEND TYPE", typeof sendMessage)
 console.log("SEND FN", sendMessage)
@@ -350,15 +343,14 @@ console.log("MESSAGE COUNT", messages.length)
 
   console.log("SENDING:", text)
 
-await sendMessage(text)
+await sendMessage(text, {
+  data: {
+    sessionId: sessionIdRef.current,
+  },
+})
 
-  const dbMsgs = await apiGetMessages(
+  const dbMsgs = await apiGetMessages( 
   sessionIdRef.current!
-)
-
-console.log(
-  "DB AFTER SEND",
-  dbMsgs
 )
 
 
@@ -369,10 +361,6 @@ setTimeout(() => {
   )
 }, 1000)
 
-console.log(
-  "MESSAGES AFTER SEND",
-  messages
-)
 } 
 const handleKey = (e: React.KeyboardEvent) => {
   if (e.key === 'Enter' && !e.shiftKey) {
